@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { SpeechMetrics } from "@/lib/interview/types";
 
 // Minimal typings for the Web Speech API (not in lib.dom for all TS versions).
 interface SpeechRecognitionResultLike {
@@ -30,11 +31,13 @@ function getCtor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+const PAUSE_SEC = 3;
+
 /**
- * Browser speech-to-text. Keeps listening across Chrome's automatic silence timeouts until
- * `stop()` is called, and tracks total speaking time for pace analysis.
+ * Browser speech-to-text. Keeps listening across Chrome's silence timeouts until `stop()`,
+ * and tracks speaking time and long pauses (> 3s between phrases) for coaching.
  */
-export function useSpeechRecognition(onFinal: (text: string) => void) {
+export function useSpeechRecognition(onFinal: (text: string) => void, lang = "en-IN") {
   const [supported, setSupported] = useState(false);
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState("");
@@ -43,6 +46,8 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
   const wantRef = useRef(false);
   const startedAtRef = useRef<number | null>(null);
   const totalMsRef = useRef(0);
+  const lastSpeechRef = useRef<number | null>(null);
+  const pausesRef = useRef({ pauses: 0, longest: 0 });
   const onFinalRef = useRef(onFinal);
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -63,6 +68,18 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
     }
   };
 
+  const markSpeech = () => {
+    const now = Date.now();
+    if (lastSpeechRef.current !== null) {
+      const gap = (now - lastSpeechRef.current) / 1000;
+      if (gap > PAUSE_SEC) {
+        pausesRef.current.pauses += 1;
+        pausesRef.current.longest = Math.max(pausesRef.current.longest, gap);
+      }
+    }
+    lastSpeechRef.current = now;
+  };
+
   const start = useCallback(() => {
     const Ctor = getCtor();
     if (!Ctor || wantRef.current) return;
@@ -70,8 +87,9 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
     const rec = new Ctor();
     rec.continuous = true;
     rec.interimResults = true;
-    rec.lang = navigator.language || "en-US";
+    rec.lang = lang;
     rec.onresult = (e) => {
+      markSpeech();
       let partial = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const result = e.results[i];
@@ -104,25 +122,29 @@ export function useSpeechRecognition(onFinal: (text: string) => void) {
     recRef.current = rec;
     wantRef.current = true;
     startedAtRef.current = Date.now();
+    lastSpeechRef.current = Date.now();
     rec.start();
     setListening(true);
-  }, []);
+  }, [lang]);
 
   const stop = useCallback(() => {
     wantRef.current = false;
     recRef.current?.stop();
     closeSegment();
+    lastSpeechRef.current = null;
     setListening(false);
   }, []);
 
-  /** Returns total seconds spoken since the last call, and resets the counter. */
-  const takeSpeakingSeconds = useCallback(() => {
+  /** Speaking seconds and pause metrics since the last call; resets the counters. */
+  const takeMetrics = useCallback((): { seconds: number; speech: SpeechMetrics } => {
     closeSegment();
     if (wantRef.current) startedAtRef.current = Date.now();
-    const secs = totalMsRef.current / 1000;
+    const seconds = totalMsRef.current / 1000;
+    const speech = { pauses: pausesRef.current.pauses, longestPauseSec: Math.round(pausesRef.current.longest * 10) / 10 };
     totalMsRef.current = 0;
-    return secs;
+    pausesRef.current = { pauses: 0, longest: 0 };
+    return { seconds, speech };
   }, []);
 
-  return { supported, listening, interim, error, start, stop, takeSpeakingSeconds };
+  return { supported, listening, interim, error, start, stop, takeMetrics };
 }

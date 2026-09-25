@@ -14,7 +14,7 @@ export function Greeting({ name }: { name: string }) {
   const [greeting, setGreeting] = useState("Hello");
   useEffect(() => setGreeting(partOfDay(new Date().getHours())), []);
   return (
-    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+    <h1 className="text-headline-md sm:text-headline-lg">
       {greeting}, {name} 👋
     </h1>
   );

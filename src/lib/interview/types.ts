@@ -1,4 +1,4 @@
-import type { AnswerMode, Difficulty, InterviewType, Personality } from "./config";
+import type { AnswerMode, Difficulty, InterviewType, Language, Personality } from "./config";
 
 export type Signal = "strong" | "adequate" | "weak" | "gap" | "clarification";
 export type TurnAction = "opening" | "follow_up" | "probe" | "easier" | "next_topic" | "clarify" | "wrap_up";
@@ -14,6 +14,38 @@ export interface InterviewConfig {
   useResume: boolean;
   jobDescription?: string;
   focus?: string;
+  language?: Language;
+  /** Company-style interview pack id. */
+  packId?: string;
+  /** Short practice drill on `focus` (10 minutes, fundamentals → harder). */
+  drill?: boolean;
+  /** Coding round: problem id from the bank and the language the candidate writes in. */
+  problemId?: string;
+  codeLanguage?: CodeLanguage;
+  /** Mock loop membership. */
+  loopId?: string;
+  roundIndex?: number;
+}
+
+export type CodeLanguage = "javascript" | "python";
+
+export interface TestResult {
+  name: string;
+  passed: boolean;
+  expected: string;
+  actual?: string;
+  error?: string;
+}
+
+export interface CodeSubmission {
+  language: CodeLanguage;
+  source: string;
+  tests?: { passed: number; total: number; results: TestResult[] };
+}
+
+export interface SpeechMetrics {
+  pauses: number;
+  longestPauseSec: number;
 }
 
 export interface PlanTopic {
@@ -46,6 +78,10 @@ export interface Turn {
   answerDurationSec?: number;
   inputMode?: AnswerMode;
   evaluation?: AnswerEvaluation;
+  code?: CodeSubmission;
+  /** Text summary of the candidate's whiteboard diagram at answer time. */
+  diagram?: { summary: string };
+  speech?: SpeechMetrics;
 }
 
 export interface SkillScore {
@@ -81,11 +117,30 @@ export interface CandidateContext {
   skills: string[];
 }
 
+export interface JdSkill {
+  name: string;
+  importance: "must" | "nice";
+  match: "strong" | "partial" | "missing";
+  evidence: string;
+}
+
+export interface JdAnalysis {
+  title: string;
+  company: string | null;
+  seniority: string | null;
+  summary: string;
+  requiredSkills: JdSkill[];
+  focusAreas: string[];
+  /** 0-100 practice readiness estimate from skill coverage (not a hiring prediction). */
+  readiness: number;
+}
+
 export interface InterviewContext {
   candidate: CandidateContext;
   config: InterviewConfig;
   resume?: ResumeAnalysis;
   memory?: CandidateMemory;
+  jd?: JdAnalysis;
 }
 
 export interface PlanResult {
@@ -121,6 +176,14 @@ export const CATEGORY_LABELS: Record<CategoryKey, string> = {
   clarity: "Clarity",
 };
 
+export interface StarCoverage {
+  situation: number;
+  task: number;
+  action: number;
+  result: number;
+  answers: number;
+}
+
 export interface CommunicationStats {
   answers: number;
   totalWords: number;
@@ -129,6 +192,15 @@ export interface CommunicationStats {
   fillerWords: Record<string, number>;
   fillerPer100Words: number;
   wordsPerMinute: number | null;
+  /** v2 metrics (optional for reports generated before they existed). */
+  paceByAnswer?: { turnIndex: number; wpm: number }[];
+  pauses?: number;
+  longestPauseSec?: number | null;
+  repeatedPhrases?: { phrase: string; count: number }[];
+  /** Share (0-1) of behavioral answers covering each STAR component. */
+  star?: StarCoverage | null;
+  /** Share (0-1) of long answers that use signposting ("first… then… finally"). */
+  signposting?: number;
 }
 
 export interface QuestionFeedback {
@@ -137,6 +209,29 @@ export interface QuestionFeedback {
   didWell: string[];
   missing: string[];
   betterAnswer: string;
+}
+
+export interface ClaimCheck {
+  claim: string;
+  status: "verified" | "partial" | "unverified" | "not_discussed";
+  note: string;
+}
+
+export interface CodeReview {
+  correctness: number;
+  complexity: number;
+  edgeCases: number;
+  codeQuality: number;
+  explanation: number;
+  timeComplexity: string;
+  spaceComplexity: string;
+  notes: string[];
+}
+
+export interface TopicImprovement {
+  topic: string;
+  before: number;
+  after: number;
 }
 
 export interface InterviewReport {
@@ -151,6 +246,17 @@ export interface InterviewReport {
   questions: QuestionFeedback[];
   communication: CommunicationStats;
   generatedAt: Date;
+  /** Project deep dive: how each resume claim held up under questioning. */
+  claims?: ClaimCheck[];
+  /** Coding rounds: structured code review (scores 0-10). */
+  coding?: CodeReview;
+  /** Weak topics from earlier interviews re-tested in this one. */
+  improvement?: TopicImprovement[];
+  /** Per-topic average score (0-10) for analytics. */
+  topicScores?: { topic: string; score: number; count: number }[];
 }
 
-export type ReportDraft = Omit<InterviewReport, "communication" | "generatedAt">;
+export type ReportDraft = Omit<
+  InterviewReport,
+  "communication" | "generatedAt" | "improvement" | "topicScores"
+>;

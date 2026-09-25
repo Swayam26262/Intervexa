@@ -4,14 +4,15 @@ import { AuthForm } from "../auth-form";
 
 export const metadata: Metadata = { title: "Log in" };
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
   return (
     <>
-      <div className="mb-6 space-y-1 text-center">
-        <h1 className="text-xl font-semibold">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">Pick up where your last interview left off.</p>
+      <div className="mb-8 space-y-2">
+        <h1 className="text-headline-md">Welcome back</h1>
+        <p className="text-body-lg text-on-surface-variant">Pick up where your last interview left off.</p>
       </div>
-      <AuthForm mode="login" googleEnabled={googleEnabled} />
+      <AuthForm mode="login" googleEnabled={googleEnabled} next={next?.startsWith("/") && !next.startsWith("//") ? next : undefined} />
     </>
   );
 }

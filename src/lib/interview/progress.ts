@@ -1,4 +1,4 @@
-import { maxQuestionsFor } from "./config";
+import { maxQuestionsFor, type InterviewType } from "./config";
 import type { AnswerEvaluation, InterviewReport, ReportDraft, Turn } from "./types";
 import { CATEGORY_KEYS } from "./types";
 
@@ -24,8 +24,9 @@ export function turnInfo(
   startedAt: Date,
   durationMinutes: number,
   now: Date = new Date(),
+  type?: InterviewType,
 ): TurnInfo {
-  const maxQuestions = maxQuestionsFor(durationMinutes);
+  const maxQuestions = maxQuestionsFor(durationMinutes, type);
   const minutesElapsed = Math.max(0, (now.getTime() - startedAt.getTime()) / 60000);
   const questionsAsked = turns.length;
   return {
@@ -95,7 +96,22 @@ export function normalizeReport(draft: ReportDraft, turns: Turn[]): ReportDraft 
     categoryScores[key] = value === null || value === undefined ? null : Math.round(clamp(value, 0, 100));
   }
 
+  const clamp10 = (n: number) => Math.round(clamp(n, 0, 10) * 10) / 10;
   return {
+    ...(draft.claims?.length ? { claims: draft.claims.slice(0, 8) } : {}),
+    ...(draft.coding
+      ? {
+          coding: {
+            ...draft.coding,
+            correctness: clamp10(draft.coding.correctness),
+            complexity: clamp10(draft.coding.complexity),
+            edgeCases: clamp10(draft.coding.edgeCases),
+            codeQuality: clamp10(draft.coding.codeQuality),
+            explanation: clamp10(draft.coding.explanation),
+            notes: tidyList(draft.coding.notes, 5),
+          },
+        }
+      : {}),
     overallScore: Math.round(clamp(draft.overallScore, 0, 100)),
     categoryScores,
     summary: draft.summary.trim(),

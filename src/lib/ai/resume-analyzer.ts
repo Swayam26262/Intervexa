@@ -1,6 +1,7 @@
 import type { ResumeAnalysis } from "@/lib/interview/types";
 import { generateJson, isAiConfigured } from "./client";
-import { mentions } from "./demo/question-bank";
+import { mentions, SKILLS, skillsIn } from "@/lib/skills";
+export { categorizeSkill, SKILL_CATEGORIES, SKILLS, skillsIn, type SkillCategory } from "@/lib/skills";
 import { resumePrompt, resumeSystemPrompt } from "./prompts";
 import { resumeAnalysisSchema } from "./schemas";
 
@@ -40,48 +41,6 @@ export function normalizeResumeAnalysis(a: ResumeAnalysis): ResumeAnalysis {
 }
 
 // ─── Offline heuristic analysis (demo mode) ────────────────────────────────
-
-const SKILLS: { name: string; category: string; aliases: string[] }[] = [
-  { name: "Python", category: "language", aliases: ["python"] },
-  { name: "JavaScript", category: "language", aliases: ["javascript", "js", "es6"] },
-  { name: "TypeScript", category: "language", aliases: ["typescript", "ts"] },
-  { name: "Java", category: "language", aliases: ["java"] },
-  { name: "C++", category: "language", aliases: ["c++", "cpp"] },
-  { name: "Go", category: "language", aliases: ["golang"] },
-  { name: "SQL", category: "language", aliases: ["sql"] },
-  { name: "React", category: "frontend", aliases: ["react", "react.js", "reactjs"] },
-  { name: "Next.js", category: "frontend", aliases: ["next.js", "nextjs"] },
-  { name: "Tailwind CSS", category: "frontend", aliases: ["tailwind", "tailwindcss"] },
-  { name: "HTML/CSS", category: "frontend", aliases: ["html", "css"] },
-  { name: "Node.js", category: "backend", aliases: ["node", "node.js", "nodejs"] },
-  { name: "Express", category: "backend", aliases: ["express", "express.js"] },
-  { name: "Django", category: "backend", aliases: ["django"] },
-  { name: "FastAPI", category: "backend", aliases: ["fastapi"] },
-  { name: "Flask", category: "backend", aliases: ["flask"] },
-  { name: "REST APIs", category: "backend", aliases: ["rest api", "rest apis", "restful"] },
-  { name: "GraphQL", category: "backend", aliases: ["graphql"] },
-  { name: "WebSockets", category: "backend", aliases: ["websocket", "websockets", "socket.io"] },
-  { name: "LLMs", category: "ai_ml", aliases: ["llm", "llms", "large language model", "gpt", "gemini", "openai"] },
-  { name: "RAG", category: "ai_ml", aliases: ["rag", "retrieval-augmented", "retrieval augmented"] },
-  { name: "Prompt Engineering", category: "ai_ml", aliases: ["prompt engineering", "prompting"] },
-  { name: "LangChain", category: "ai_ml", aliases: ["langchain", "langgraph"] },
-  { name: "Vector Databases", category: "ai_ml", aliases: ["vector database", "vector db", "pinecone", "chroma", "faiss", "pgvector", "embeddings"] },
-  { name: "Machine Learning", category: "ai_ml", aliases: ["machine learning", "ml", "scikit-learn", "sklearn"] },
-  { name: "Deep Learning", category: "ai_ml", aliases: ["deep learning", "pytorch", "tensorflow", "keras"] },
-  { name: "MongoDB", category: "database", aliases: ["mongodb", "mongo", "mongoose"] },
-  { name: "PostgreSQL", category: "database", aliases: ["postgresql", "postgres"] },
-  { name: "MySQL", category: "database", aliases: ["mysql"] },
-  { name: "Redis", category: "database", aliases: ["redis"] },
-  { name: "AWS", category: "cloud_devops", aliases: ["aws", "amazon web services", "ec2", "s3", "lambda"] },
-  { name: "GCP", category: "cloud_devops", aliases: ["gcp", "google cloud"] },
-  { name: "Azure", category: "cloud_devops", aliases: ["azure"] },
-  { name: "Docker", category: "cloud_devops", aliases: ["docker"] },
-  { name: "Kubernetes", category: "cloud_devops", aliases: ["kubernetes", "k8s"] },
-  { name: "CI/CD", category: "cloud_devops", aliases: ["ci/cd", "github actions", "jenkins"] },
-  { name: "Testing", category: "testing", aliases: ["jest", "vitest", "pytest", "cypress", "playwright", "unit test", "unit tests", "testing"] },
-  { name: "System Design", category: "other", aliases: ["system design", "microservices", "distributed systems", "scalable architecture"] },
-  { name: "Git", category: "other", aliases: ["git", "github"] },
-];
 
 const ROLE_EXPECTATIONS: { match: string[]; skills: string[] }[] = [
   { match: ["ai", "ml", "machine learning", "llm", "data scientist"], skills: ["Python", "LLMs", "RAG", "Vector Databases", "AWS", "System Design", "Testing"] },
@@ -129,10 +88,6 @@ function groupEntries(lines: string[]): { title: string; bullets: string[] }[] {
     }
   }
   return entries;
-}
-
-function skillsIn(text: string) {
-  return SKILLS.filter((s) => s.aliases.some((a) => mentions(text, a)));
 }
 
 export function heuristicResumeAnalysis(text: string, targetRole?: string): ResumeAnalysis {

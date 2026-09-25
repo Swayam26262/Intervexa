@@ -1,5 +1,6 @@
 export const INTERVIEW_TYPES = [
   "technical",
+  "coding",
   "system_design",
   "project_deep_dive",
   "behavioral",
@@ -10,19 +11,40 @@ export type InterviewType = (typeof INTERVIEW_TYPES)[number];
 export const DIFFICULTIES = ["easy", "medium", "hard"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-export const PERSONALITIES = ["friendly", "professional", "strict"] as const;
+export const PERSONALITIES = ["friendly", "professional", "strict", "faang", "startup"] as const;
 export type Personality = (typeof PERSONALITIES)[number];
 
-export const DURATIONS = [15, 30, 45] as const;
+export const DURATIONS = [10, 15, 30, 45] as const;
 export type Duration = (typeof DURATIONS)[number];
 
 export const ANSWER_MODES = ["text", "voice"] as const;
 export type AnswerMode = (typeof ANSWER_MODES)[number];
 
+/** Interview languages. Speech codes drive browser speech recognition / synthesis. */
+export const LANGUAGES = {
+  en: { label: "English", speech: "en-IN", prompt: "English" },
+  hinglish: { label: "Hinglish", speech: "en-IN", prompt: "Hinglish (natural mix of Hindi and English, written in Latin script)" },
+  hi: { label: "हिन्दी (Hindi)", speech: "hi-IN", prompt: "Hindi (Devanagari script)" },
+  mr: { label: "मराठी (Marathi)", speech: "mr-IN", prompt: "Marathi (Devanagari script)" },
+  ta: { label: "தமிழ் (Tamil)", speech: "ta-IN", prompt: "Tamil" },
+  te: { label: "తెలుగు (Telugu)", speech: "te-IN", prompt: "Telugu" },
+  bn: { label: "বাংলা (Bengali)", speech: "bn-IN", prompt: "Bengali" },
+  kn: { label: "ಕನ್ನಡ (Kannada)", speech: "kn-IN", prompt: "Kannada" },
+} as const;
+export type Language = keyof typeof LANGUAGES;
+export const LANGUAGE_CODES = Object.keys(LANGUAGES) as Language[];
+
 export const TYPE_META: Record<
   InterviewType,
   { label: string; emoji: string; blurb: string; guidance: string }
 > = {
+  coding: {
+    label: "Coding",
+    emoji: "💻",
+    blurb: "Solve a problem in a real editor, run tests, then defend your solution.",
+    guidance:
+      "Run a live coding round. The candidate solves the given problem in an editor and can run tests. Evaluate correctness (use the test results), time and space complexity, edge cases, code quality and how clearly they explain their approach. Follow up on complexity, edge cases, and how they would optimise or extend the solution. Never write the solution for them.",
+  },
   technical: {
     label: "Technical",
     emoji: "🎤",
@@ -96,10 +118,23 @@ export const PERSONALITY_META: Record<Personality, { label: string; blurb: strin
     guidance:
       "Direct and demanding. If an answer misses the point, say so briefly (e.g. 'That doesn't address the scalability concern.') and push again. No small talk.",
   },
+  faang: {
+    label: "FAANG-style",
+    blurb: "Deep probing on scale, trade-offs and fundamentals.",
+    guidance:
+      "Big-tech style: calm and precise, with a high bar. Keep drilling one level deeper on every claim — scale (millions of users), trade-offs, complexity, failure modes and data consistency. Expect structured answers and ask 'how would you measure that?'.",
+  },
+  startup: {
+    label: "Startup",
+    blurb: "Practical and scrappy. “Production is down — what now?”",
+    guidance:
+      "Early-stage startup founder/CTO style: practical, fast-paced and ownership-focused. Favour real-world scenarios ('You have two hours and production is down. What do you do?'), shipping under constraints, pragmatic tool choices and cost. Value bias for action and end-to-end ownership over textbook answers.",
+  },
 };
 
-/** Roughly one question every ~2.5 minutes, with a small buffer. */
-export function maxQuestionsFor(durationMinutes: number): number {
+/** Roughly one question every ~2.5 minutes (coding: ~6 minutes), with a small buffer. */
+export function maxQuestionsFor(durationMinutes: number, type?: InterviewType): number {
+  if (type === "coding") return Math.max(3, Math.round(durationMinutes / 6) + 1);
   return Math.max(4, Math.round(durationMinutes / 2.5) + 1);
 }
 

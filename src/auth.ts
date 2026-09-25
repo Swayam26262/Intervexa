@@ -53,6 +53,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 provider: account.provider,
               },
               $set: user.image ? { image: user.image } : {},
+              // Google has verified this address.
+              $min: { emailVerified: new Date() },
             },
             { upsert: true, new: true },
           );

@@ -7,7 +7,7 @@ vi.mock("@/lib/ai/client", async (importOriginal) => ({
   generateJson: (...args: unknown[]) => generateJson(...args),
 }));
 
-const { geminiEngine } = await import("@/lib/ai/gemini-engine");
+const { llmEngine } = await import("@/lib/ai/llm-engine");
 const { planSchema, turnSchema, wrapUpSchema } = await import("@/lib/ai/schemas");
 
 const ctx: InterviewContext = {
@@ -33,7 +33,7 @@ const info = { questionsAsked: 1, maxQuestions: 13, minutesElapsed: 3, sameTopic
 
 beforeEach(() => generateJson.mockReset());
 
-describe("gemini engine", () => {
+describe("llm engine", () => {
   it("plans with the plan schema and records memory", async () => {
     generateJson.mockResolvedValue({
       focusSummary: "f",
@@ -42,7 +42,7 @@ describe("gemini engine", () => {
       openingTopic: "",
       openingQuestion: " Walk me through it. ",
     });
-    const out = await geminiEngine.plan(ctx);
+    const out = await llmEngine.plan(ctx);
     const call = generateJson.mock.calls[0][0];
     expect(call.schema).toBe(planSchema);
     expect(call.prompt).toContain("Database Scaling (2 of last 2)");
@@ -61,7 +61,7 @@ describe("gemini engine", () => {
       topic: "RAG",
       message: "How did you pick the chunk size?",
     });
-    const out = await geminiEngine.nextTurn(ctx, plan, turns, info);
+    const out = await llmEngine.nextTurn(ctx, plan, turns, info);
     expect(generateJson.mock.calls[0][0].schema).toBe(turnSchema);
     expect(generateJson.mock.calls[0][0].prompt).toContain("<answer>We chunked docs.</answer>");
     expect(out).toMatchObject({ action: "probe", topic: "RAG", message: "How did you pick the chunk size?" });
@@ -74,7 +74,7 @@ describe("gemini engine", () => {
       evaluation: { score: 6, signal: "adequate", strengths: [], missing: [], note: "" },
       message: "That's time. Thank you.",
     });
-    const out = await geminiEngine.nextTurn(ctx, plan, turns, { ...info, mustWrapUp: true });
+    const out = await llmEngine.nextTurn(ctx, plan, turns, { ...info, mustWrapUp: true });
     expect(generateJson.mock.calls[0][0].schema).toBe(wrapUpSchema);
     expect(out.action).toBe("wrap_up");
     expect(out.message).toBe("That's time. Thank you.");

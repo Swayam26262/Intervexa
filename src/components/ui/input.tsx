@@ -1,18 +1,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+export const fieldClasses =
+  "w-full min-w-0 rounded-xl border border-outline bg-transparent px-4 text-body-lg text-on-surface transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-on-surface-variant/70 hover:border-on-surface focus-visible:border-primary focus-visible:shadow-[inset_0_0_0_1px_var(--primary)] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 aria-invalid:border-error md:text-body-md";
+
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
-  return (
-    <input
-      type={type}
-      data-slot="input"
-      className={cn(
-        "flex h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive md:text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium",
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <input type={type} data-slot="input" className={cn(fieldClasses, "h-12", className)} {...props} />;
 }
 
 export { Input };

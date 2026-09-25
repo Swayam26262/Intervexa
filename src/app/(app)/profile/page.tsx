@@ -1,41 +1,43 @@
 import type { Metadata } from "next";
-import { FileText } from "lucide-react";
+import { FileText, UserRound } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { ResumeAnalysisView } from "@/components/resume-analysis-view";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getLatestResume, getUser } from "@/lib/server/data";
+import { getEntitlements } from "@/lib/billing/service";
+import { getActiveResume, getUser, listResumes } from "@/lib/server/data";
 import { requireUserId } from "@/lib/server/session";
-import { formatDate } from "@/lib/utils";
 import { ProfileForm } from "./profile-form";
-import { ResumeUpload } from "./resume-upload";
+import { ResumeLibrary } from "./resume-library";
 
 export const metadata: Metadata = { title: "Profile" };
 
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const userId = await requireUserId();
-  const [{ welcome }, user, resume] = await Promise.all([searchParams, getUser(userId), getLatestResume(userId)]);
+  const [{ welcome }, user, resumes, active, entitlements] = await Promise.all([
+    searchParams,
+    getUser(userId),
+    listResumes(userId),
+    getActiveResume(userId),
+    getEntitlements(userId),
+  ]);
   const p = user?.profile;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{welcome ? "Welcome to Intervexa 👋" : "Your profile"}</h1>
-        <p className="text-muted-foreground">
-          {welcome
+    <div className="mx-auto max-w-4xl">
+      <PageHeader
+        title={welcome ? "Welcome to Intervexa 👋" : "Profile & resumes"}
+        description={
+          welcome
             ? "Tell us what you're preparing for. It takes a minute and makes every interview personal."
-            : "Intervexa uses this to decide what to ask you."}
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Candidate profile</CardTitle>
-          <CardDescription>Role, experience and skills.</CardDescription>
-        </CardHeader>
-        <CardContent>
+            : "Intervexa uses your profile and active resume to decide what to ask."
+        }
+      />
+      <div className="space-y-6">
+        <section className="rounded-[28px] border border-outline-variant bg-card p-5 sm:p-8" aria-labelledby="profile-heading">
+          <h2 id="profile-heading" className="mb-6 flex items-center gap-2 text-title-lg">
+            <UserRound className="size-5 text-primary" /> Candidate profile
+          </h2>
           <ProfileForm
-            // A new resume can autofill skills/experience: remount the form to show them.
-            // (Keyed on the resume, not updatedAt, so the form's own saves keep their "Saved" state.)
-            key={resume ? String(resume._id) : "no-resume"}
+            key={active ? String(active._id) : "no-resume"}
             initial={{
               name: user?.name ?? "",
               currentRole: p?.currentRole ?? "",
@@ -47,25 +49,35 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
               preferredDifficulty: p?.preferredDifficulty ?? "medium",
             }}
           />
-        </CardContent>
-      </Card>
+        </section>
 
-      <Card id="resume" className="scroll-mt-20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="size-4 text-primary" /> Resume analysis
-          </CardTitle>
-          <CardDescription>
-            {resume
-              ? `${resume.fileName} · analysed ${formatDate(resume.createdAt)}${resume.aiMode === "demo" ? " (demo analysis)" : ""}`
-              : "Upload your resume so Intervexa can verify your claims and drill into your projects."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <ResumeUpload hasResume={Boolean(resume)} />
-          {resume && <ResumeAnalysisView analysis={resume.analysis} />}
-        </CardContent>
-      </Card>
+        <section id="resumes" className="scroll-mt-24 rounded-[28px] border border-outline-variant bg-card p-5 sm:p-8" aria-labelledby="resume-heading">
+          <h2 id="resume-heading" className="mb-1 flex items-center gap-2 text-title-lg">
+            <FileText className="size-5 text-primary" /> Resumes
+          </h2>
+          <p className="mb-6 text-body-md text-on-surface-variant">
+            Your active resume powers project deep dives and claim verification.
+          </p>
+          <ResumeLibrary
+            maxResumes={entitlements.maxResumes}
+            resumes={resumes.map((r) => ({
+              id: String(r._id),
+              fileName: r.fileName,
+              size: r.size ?? undefined,
+              createdAt: new Date(r.createdAt).toISOString(),
+              isActive: active ? String(active._id) === String(r._id) : false,
+              demo: r.aiMode === "demo",
+              hasFile: Boolean(r.fileId),
+            }))}
+          />
+          {active && (
+            <div className="mt-8 border-t border-outline-variant pt-8">
+              <h3 className="mb-5 text-title-md">Analysis of {active.fileName}</h3>
+              <ResumeAnalysisView analysis={active.analysis} />
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

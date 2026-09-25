@@ -10,31 +10,40 @@ import type {
 } from "@/lib/interview/types";
 import { isAiConfigured } from "./client";
 import { demoEngine } from "./demo/engine";
-import { geminiEngine } from "./gemini-engine";
+import { llmEngine } from "./llm-engine";
+import { activeProvider, type ProviderName } from "./providers";
 
-export type AiMode = "gemini" | "demo";
+/** Stored on each interview: which provider ran it ("demo" = offline engine). */
+export type AiMode = ProviderName | "demo";
 
 export interface InterviewEngine {
-  mode: AiMode;
+  mode: "llm" | "demo";
   /** Builds the interview plan, greeting and opening question. */
   plan(ctx: InterviewContext): Promise<PlanResult>;
   /**
    * Evaluates the latest answer (the last turn must be answered) and produces the next
    * interviewer message. When `info.mustWrapUp` is set the result action is "wrap_up".
+   * `onDelta` receives the interviewer's message as it streams (when supported).
    */
-  nextTurn(ctx: InterviewContext, plan: InterviewPlan, turns: Turn[], info: TurnInfo): Promise<TurnResult>;
+  nextTurn(
+    ctx: InterviewContext,
+    plan: InterviewPlan,
+    turns: Turn[],
+    info: TurnInfo,
+    onDelta?: (text: string) => void,
+  ): Promise<TurnResult>;
   /** Builds the final report from the full transcript. */
   report(ctx: InterviewContext, plan: InterviewPlan, turns: Turn[], communication: CommunicationStats): Promise<ReportDraft>;
 }
 
 export function currentAiMode(): AiMode {
-  return isAiConfigured() ? "gemini" : "demo";
+  return activeProvider()?.name ?? "demo";
 }
 
 /**
- * Returns the engine for a mode. An interview keeps the engine it started with, unless it
- * started with Gemini and the key has since been removed.
+ * Returns the engine for a stored mode. Interviews started in demo mode stay in demo mode;
+ * LLM interviews use the active provider (falling back to demo if every key was removed).
  */
 export function getEngine(mode: AiMode = currentAiMode()): InterviewEngine {
-  return mode === "gemini" && isAiConfigured() ? geminiEngine : demoEngine;
+  return mode !== "demo" && isAiConfigured() ? llmEngine : demoEngine;
 }

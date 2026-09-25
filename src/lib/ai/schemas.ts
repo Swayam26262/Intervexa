@@ -82,6 +82,29 @@ export const reportSchema = z.object({
       }),
     )
     .describe("One entry per answered question."),
+  claims: z
+    .array(
+      z.object({
+        claim: z.string(),
+        status: z.enum(["verified", "partial", "unverified", "not_discussed"]),
+        note: z.string().describe("One sentence on how the answers supported (or didn't support) the claim."),
+      }),
+    )
+    .nullable()
+    .describe("Resume claim verification, or null when not requested."),
+  coding: z
+    .object({
+      correctness: z.number().describe("0-10"),
+      complexity: z.number().describe("0-10: how close to optimal, and how well they analysed it"),
+      edgeCases: z.number().describe("0-10"),
+      codeQuality: z.number().describe("0-10"),
+      explanation: z.number().describe("0-10"),
+      timeComplexity: z.string().describe("Time complexity of the candidate's solution, e.g. O(n)."),
+      spaceComplexity: z.string(),
+      notes: z.array(z.string()).describe("2-4 concrete review notes."),
+    })
+    .nullable()
+    .describe("Code review for coding rounds, or null."),
 });
 
 export const resumeAnalysisSchema = z.object({

@@ -1,0 +1,20 @@
+Swayam Patil
+Full-Stack & AI Engineer · 1.5 years experience
+
+SKILLS
+Python, JavaScript, TypeScript, React, Next.js, Node.js, MongoDB, PostgreSQL, Redis, Docker
+
+EXPERIENCE
+Acme Labs | Software Engineer | Jan 2025 - Present
+• Built a production-grade RAG pipeline serving 5,000 users with Gemini and a vector database
+• Reduced API latency by 40% by adding Redis caching
+
+PROJECTS
+ParkEase — real-time parking availability
+• Designed an event pipeline with Redis Streams and Node.js
+• Implemented a Next.js dashboard with MongoDB
+InterviewBot
+• Created an LLM-powered mock interviewer in Python
+
+EDUCATION
+B.Tech Computer Engineering

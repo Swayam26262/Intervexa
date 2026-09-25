@@ -3,23 +3,32 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/** Material 3 buttons: filled, tonal, outlined, text, elevated — pill-shaped with state layers. */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+  "state-layer inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap transition-[background-color,box-shadow,color] duration-200 ease-[var(--ease-emphasized)] select-none disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-[18px]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
-        destructive: "bg-destructive text-white shadow-sm hover:bg-destructive/90",
-        outline: "border bg-card shadow-xs hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-primary text-on-primary hover:shadow-elevation-1",
+        tonal: "bg-secondary-container text-on-secondary-container hover:shadow-elevation-1",
+        outline: "border border-outline bg-transparent text-primary",
+        text: "bg-transparent text-primary",
+        elevated: "bg-surface-container-low text-primary shadow-elevation-1 hover:shadow-elevation-2",
+        destructive: "bg-error text-on-error hover:shadow-elevation-1",
+        ghost: "bg-transparent text-on-surface-variant",
+        inverse: "bg-inverse-surface text-inverse-on-surface",
+        // Legacy aliases.
+        secondary: "bg-secondary-container text-on-secondary-container",
+        link: "text-primary underline-offset-4 hover:underline after:hidden",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-11 rounded-lg px-6 text-base",
-        icon: "size-9",
+        default: "h-10 px-5 text-label-lg",
+        sm: "h-8 px-3.5 text-label-md",
+        lg: "h-12 px-7 text-body-lg font-semibold",
+        xl: "h-14 px-8 text-title-md",
+        icon: "size-10",
+        "icon-sm": "size-8 [&_svg:not([class*='size-'])]:size-4",
+        "icon-lg": "size-12 [&_svg:not([class*='size-'])]:size-6",
       },
     },
     defaultVariants: { variant: "default", size: "default" },
@@ -34,7 +43,7 @@ function Button({
   ...props
 }: React.ComponentProps<"button"> & VariantProps<typeof buttonVariants> & { asChild?: boolean }) {
   const Comp = asChild ? Slot : "button";
-  return <Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} {...props} />;
+  return <Comp data-slot="button" className={cn(buttonVariants({ variant, size }), className)} {...props} />;
 }
 
 export { Button, buttonVariants };

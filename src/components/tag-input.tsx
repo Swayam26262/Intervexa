@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { InputChip } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 
 export function TagInput({
@@ -10,12 +10,14 @@ export function TagInput({
   onChange,
   placeholder,
   max = 50,
+  className,
 }: {
   id?: string;
   value: string[];
   onChange: (tags: string[]) => void;
   placeholder?: string;
   max?: number;
+  className?: string;
 }) {
   const [draft, setDraft] = useState("");
 
@@ -33,21 +35,14 @@ export function TagInput({
   return (
     <div
       className={cn(
-        "flex min-h-9 w-full flex-wrap items-center gap-1.5 rounded-md border border-input px-2 py-1.5 shadow-xs focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/40",
+        "flex min-h-12 w-full flex-wrap items-center gap-1.5 rounded-xl border border-outline px-2 py-2 transition-[border-color,box-shadow] hover:border-on-surface focus-within:border-primary focus-within:shadow-[inset_0_0_0_1px_var(--primary)]",
+        className,
       )}
     >
       {value.map((tag) => (
-        <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
+        <InputChip key={tag} onRemove={() => onChange(value.filter((t) => t !== tag))}>
           {tag}
-          <button
-            type="button"
-            aria-label={`Remove ${tag}`}
-            onClick={() => onChange(value.filter((t) => t !== tag))}
-            className="rounded-full hover:text-destructive"
-          >
-            <X className="size-3" />
-          </button>
-        </span>
+        </InputChip>
       ))}
       <input
         id={id}
@@ -62,8 +57,8 @@ export function TagInput({
           }
         }}
         onBlur={() => draft.trim() && add(draft)}
-        placeholder={value.length ? "" : placeholder}
-        className="min-w-24 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-muted-foreground"
+        placeholder={value.length ? "Add a skill…" : placeholder}
+        className="h-8 min-w-28 flex-1 bg-transparent px-2 text-body-lg outline-none placeholder:text-on-surface-variant/70 md:text-body-md"
       />
     </div>
   );

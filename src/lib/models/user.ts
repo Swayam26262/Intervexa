@@ -14,6 +14,16 @@ const profileSchema = new Schema(
   { _id: false },
 );
 
+const planSchema = new Schema(
+  {
+    /** Pro access is a time-boxed pass (bought monthly via Razorpay Orders). */
+    proUntil: { type: Date },
+    /** Interview credits: each one is a Pro-level interview. */
+    credits: { type: Number, default: 0, min: 0 },
+  },
+  { _id: false },
+);
+
 const userSchema = new Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 120 },
@@ -21,7 +31,9 @@ const userSchema = new Schema(
     passwordHash: { type: String, select: false },
     image: { type: String },
     provider: { type: String, enum: ["credentials", "google"], default: "credentials" },
+    emailVerified: { type: Date },
     profile: { type: profileSchema, default: () => ({}) },
+    plan: { type: planSchema, default: () => ({}) },
   },
   { timestamps: true },
 );

@@ -1,3 +1,7 @@
+import { getProblem } from "@/lib/interview/coding-problems";
+import { mentions } from "@/lib/skills";
+export { mentions } from "@/lib/skills";
+import { getPack } from "@/lib/interview/packs";
 import type { InterviewContext } from "@/lib/interview/types";
 
 export interface DemoQuestion {
@@ -289,12 +293,6 @@ function toDemoTopic(def: TechnicalTopicDef, reason: string): DemoTopic {
   return { name: def.name, reason, main: def.main, followUps: def.followUps, easier: def.easier };
 }
 
-/** Whole-word (or whole-term) match, so "ai" doesn't match "failure" and "js" doesn't match "next.js". */
-export function mentions(text: string, term: string): boolean {
-  const escaped = term.toLowerCase().replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
-  return new RegExp(`(^|[^a-z0-9.])${escaped}([^a-z0-9]|$)`).test(text.toLowerCase());
-}
-
 function technicalTopics(ctx: InterviewContext): DemoTopic[] {
   const signals = [
     ...ctx.candidate.skills,
@@ -333,9 +331,92 @@ function technicalTopics(ctx: InterviewContext): DemoTopic[] {
   return [walkthrough, ...chosen];
 }
 
+function codingTopics(ctx: InterviewContext): DemoTopic[] {
+  const p = getProblem(ctx.config.problemId);
+  if (!p) return technicalTopics(ctx);
+  return [
+    {
+      name: "Approach",
+      reason: "Interviewers want to hear your plan before you code.",
+      main: q(`Let's start the coding round with ${p.title} — the full problem is in the panel. Before writing any code, talk me through your approach.`, [...p.keywords, "brute force", "because"]),
+      followUps: [q("What would a brute-force solution look like, and why is yours better?", ["brute force", "o(n", "nested", "better"])],
+      easier: q("Let's start simple: how would you solve it with a brute-force approach?", ["loop", "check", "brute"]),
+    },
+    {
+      name: "Implementation",
+      reason: "Working code under time pressure.",
+      main: q("Go ahead and implement it in the editor. Run the tests, then walk me through your code when you're ready.", ["tests", "pass", ...p.keywords]),
+      followUps: [q("Some of the hidden tests may be tricky. What inputs would break a naive solution?", ["empty", "duplicate", "negative", "edge"])],
+      easier: q("Which data structure are you using, and why?", ["map", "set", "array", "stack", "because"]),
+    },
+    {
+      name: "Complexity",
+      reason: "Complexity analysis is expected in every coding round.",
+      main: q(p.followUps[0] ?? "What's the time and space complexity of your solution?", [p.optimal.time.toLowerCase(), "time", "space", "o("]),
+      followUps: [],
+      easier: q("How does the running time grow if the input doubles?", ["linear", "double", "grow"]),
+    },
+    {
+      name: "Edge Cases",
+      reason: "Correctness on edge cases separates good from great.",
+      main: q("What edge cases did you consider, and which tests would you add?", ["empty", "single", "duplicate", "negative", "large", "null"]),
+      followUps: [],
+      easier: q("What happens with an empty input?", ["empty", "return"]),
+    },
+    {
+      name: "Extension",
+      reason: "Follow-ups test depth beyond the first solution.",
+      main: q(p.followUps[1] ?? "How would you adapt this if the input were too large to fit in memory?", ["stream", "memory", "chunk", "trade-off"]),
+      followUps: [],
+      easier: q("What would you change if this ran a million times a second?", ["cache", "optimize", "precompute"]),
+    },
+  ];
+}
+
+function drillTopics(ctx: InterviewContext): DemoTopic[] {
+  const focus = (ctx.config.focus ?? "your weak area").trim();
+  const match = [...TECHNICAL_TOPICS, ...GENERAL_TOPICS].find(
+    (t) => t.name.toLowerCase() === focus.toLowerCase() || t.triggers.some((tr) => mentions(focus, tr)),
+  );
+  if (match) {
+    return [
+      { name: `${match.name}: fundamentals`, reason: "Warm up on the basics.", main: match.easier, followUps: [], easier: match.easier },
+      { name: `${match.name}: applied`, reason: "Apply it to a realistic scenario.", main: match.main, followUps: match.followUps.slice(0, 1), easier: match.easier },
+      ...match.followUps.map((f, i) => ({ name: `${match.name}: advanced ${i + 1}`, reason: "Push to interview depth.", main: f, followUps: [], easier: match.easier })),
+    ];
+  }
+  const generic = (name: string, text: string, keywords: string[]): DemoTopic => ({
+    name: `${focus}: ${name}`,
+    reason: "Focused practice drill.",
+    main: q(text, keywords),
+    followUps: [],
+    easier: q(`In one or two sentences, what is ${focus}?`, ["is", "used"]),
+  });
+  return [
+    generic("fundamentals", `Let's drill ${focus}. Explain it in your own words, with an example from a project.`, ["example", "because", "used"]),
+    generic("pitfalls", `What are the most common mistakes or pitfalls with ${focus}, and how do you avoid them?`, ["mistake", "avoid", "because", "example"]),
+    generic("trade-offs", `Compare ${focus} with an alternative. When would you choose each?`, ["trade-off", "instead", "when", "because"]),
+    generic("at scale", `How would ${focus} change in a system with a million users?`, ["scale", "cache", "latency", "bottleneck"]),
+  ];
+}
+
 export function buildDemoTopics(ctx: InterviewContext): DemoTopic[] {
+  if (ctx.config.drill) return drillTopics(ctx);
+  const pack = getPack(ctx.config.packId);
+  if (pack?.themes && ctx.config.type === "behavioral") {
+    return pack.themes.map((t) => ({
+      name: t.name,
+      reason: `${pack.label} interviews probe this directly.`,
+      main: q(t.question, t.keywords),
+      followUps: [q("What exactly did you do, personally, and what was the measurable outcome?", ["i ", "result", "%", "impact"])],
+      easier: q("Take a moment — any example from college, internships or projects works.", ["project", "team", "i "]),
+    }));
+  }
   let topics: DemoTopic[];
   switch (ctx.config.type) {
+    case "coding":
+      topics = codingTopics(ctx);
+      break;
     case "system_design":
       topics = systemDesignTopics(ctx.config.role);
       break;
