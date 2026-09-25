@@ -82,13 +82,13 @@ export default async function DashboardPage() {
             {weakest ? `Next time, Intervexa will dig deeper into ${weakest.topic}.` : "Ready for your next interview?"}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild variant="tonal" size="lg">
+        <div className="flex w-full gap-2 sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
+          <Button asChild variant="tonal" size="lg" className="px-4 sm:px-7">
             <Link href="/practice">
               <Target /> Practice drill
             </Link>
           </Button>
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="px-4 sm:px-7">
             <Link href="/interview/new">
               Start interview <ArrowRight />
             </Link>
@@ -200,7 +200,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <section className="rounded-3xl border border-outline-variant bg-card" aria-labelledby="recent-heading">
           <div className="flex items-center justify-between px-6 pt-5 pb-2">
             <h2 id="recent-heading" className="text-title-lg">Recent interviews</h2>
@@ -339,14 +339,14 @@ function HeroCard({
   icon: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-wrap items-center gap-6 rounded-[28px] bg-primary-container p-6 text-on-primary-container sm:p-8">
-      <span className="grid size-14 place-items-center rounded-2xl bg-primary text-on-primary">{icon}</span>
+    <section className="flex flex-col items-start gap-5 rounded-[28px] bg-primary-container p-6 text-on-primary-container sm:flex-row sm:items-center sm:gap-6 sm:p-8">
+      <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary text-on-primary">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-label-lg">{eyebrow}</p>
         <h2 className="mt-1 text-headline-sm">{title}</h2>
         <p className="mt-1 max-w-2xl text-body-lg opacity-85">{body}</p>
       </div>
-      <Button asChild size="lg">
+      <Button asChild size="lg" className="w-full shrink-0 sm:w-auto">
         <Link href={href}>
           {cta} <ArrowRight />
         </Link>

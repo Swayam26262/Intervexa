@@ -159,6 +159,45 @@ describe("demo engine", () => {
     expect(topics[0].followUps[0].text).toContain("Why did you choose Redis Streams for ParkEase");
     expect(topics.some((t) => t.main.text.includes("production-grade RAG pipeline"))).toBe(true);
   });
+
+  it("counts a claim as discussed when its project was asked about", async () => {
+    const ctx = baseCtx(
+      { useResume: true },
+      {
+        resume: {
+          headline: "",
+          summary: "",
+          totalExperienceYears: 1,
+          skills: [],
+          strongAreas: [],
+          weakAreas: [],
+          projects: [{ name: "ParkEase", summary: "", technologies: [], claims: ["Designed an event pipeline with Redis Streams"] }],
+          experience: [],
+          claimsToVerify: [
+            { claim: "Designed an event pipeline with Redis Streams", followUpQuestions: [] },
+            { claim: "Reduced API latency by 40%", followUpQuestions: [] },
+          ],
+        },
+      },
+    );
+    const plan = (await demoEngine.plan(ctx)).plan;
+    const turns: Turn[] = [
+      {
+        index: 1,
+        topic: "Project Walkthrough",
+        action: "opening",
+        question: "Walk me through ParkEase and the key technical decisions you made.",
+        askedAt: new Date(),
+        answer: STRONG,
+        evaluation: { score: 8.5, signal: "strong", strengths: [], missing: [], note: "" },
+      },
+    ];
+    const { claims } = await demoEngine.report(ctx, plan, turns, analyzeCommunication(turns));
+    expect(claims).toEqual([
+      expect.objectContaining({ claim: "Designed an event pipeline with Redis Streams", status: "verified" }),
+      expect.objectContaining({ claim: "Reduced API latency by 40%", status: "not_discussed" }),
+    ]);
+  });
 });
 
 describe("demo memory greeting", () => {

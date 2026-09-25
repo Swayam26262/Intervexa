@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { describe, expect, it } from "vitest";
 import { analyzeCommunication, countFillers, countWords } from "@/lib/analysis/communication";
 
@@ -40,5 +41,17 @@ describe("analyzeCommunication", () => {
 
   it("returns null pace when there is no voice input", () => {
     expect(analyzeCommunication([{ answer: "hello there", inputMode: "text" }]).wordsPerMinute).toBeNull();
+  });
+});
+
+
+describe("cn (tailwind-merge with the M3 type scale)", () => {
+  it("keeps a text color and a type-scale size together", () => {
+    expect(cn("text-on-primary", "text-label-lg")).toBe("text-on-primary text-label-lg");
+    expect(cn("text-display-sm", "text-success")).toBe("text-display-sm text-success");
+  });
+  it("still dedupes conflicting sizes and colors", () => {
+    expect(cn("text-label-lg", "text-title-md")).toBe("text-title-md");
+    expect(cn("text-primary", "text-error")).toBe("text-error");
   });
 });

@@ -92,7 +92,7 @@ export default async function LandingPage() {
             aria-hidden
             className="pointer-events-none absolute inset-x-0 -top-24 -z-10 h-[640px] bg-[radial-gradient(60%_60%_at_20%_20%,var(--primary-container),transparent_70%),radial-gradient(50%_50%_at_85%_30%,var(--tertiary-container),transparent_70%)] opacity-80"
           />
-          <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pt-12 pb-20 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-20 lg:pb-28">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-4 pt-12 pb-20 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:pt-20 lg:pb-28">
             <div className="animate-rise-in space-y-7">
               <span className="inline-flex h-8 items-center gap-2 rounded-full bg-surface-container-low px-3 text-label-lg text-on-surface-variant shadow-elevation-1">
                 <Sparkles className="size-4 text-primary" /> Adaptive AI mock interviews
@@ -288,7 +288,7 @@ export default async function LandingPage() {
 function HeroPreview() {
   return (
     <div className="relative animate-rise-in [animation-delay:120ms]" aria-hidden>
-      <div className="rounded-[28px] bg-card p-5 shadow-elevation-3 sm:p-6">
+      <div className="rounded-[28px] border border-outline-variant/60 bg-card p-5 shadow-elevation-3 sm:p-6">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <TypeIcon type="technical" size="md" />
@@ -313,7 +313,7 @@ function HeroPreview() {
           </div>
         </div>
       </div>
-      <div className="absolute -bottom-8 -left-4 hidden w-56 rounded-3xl bg-surface-container-high p-4 shadow-elevation-2 sm:block lg:-left-10">
+      <div className="absolute -right-3 -bottom-12 hidden w-56 rounded-3xl bg-surface-container-high p-4 shadow-elevation-2 sm:block lg:-right-8">
         <div className="text-label-md text-on-surface-variant">Last report</div>
         <div className="mt-2 flex items-center gap-3">
           <ProgressRing value={76} size={56} stroke={6}>

@@ -24,7 +24,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <div className="m-auto w-full max-w-sm animate-rise-in">{children}</div>
         <p className="mt-8 text-center text-body-sm text-on-surface-variant">
           <Link href="/" className="hover:text-on-surface">
-            ← Back to intervexa
+            ← Back to Intervexa
           </Link>
         </p>
       </section>

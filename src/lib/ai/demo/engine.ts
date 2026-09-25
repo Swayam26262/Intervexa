@@ -186,12 +186,19 @@ async function decideTurn(ctx: InterviewContext, turns: Turn[], info: TurnInfo):
   return { evaluation, ...decision };
 }
 
-/** Offline claim verification: claims the interviewer asked about, graded by answer score. */
+/**
+ * Offline claim verification, graded by answer score. A claim was discussed when a question
+ * quoted it, or asked about the project it is listed under.
+ */
 function demoClaims(ctx: InterviewContext, scored: Turn[]): ClaimCheck[] | undefined {
   const claims = ctx.resume?.claimsToVerify ?? [];
   if (!claims.length || !["project_deep_dive", "technical"].includes(ctx.config.type)) return undefined;
+  const projects = ctx.resume?.projects ?? [];
   return claims.slice(0, 6).map(({ claim }) => {
-    const turn = scored.find((t) => t.question.includes(claim));
+    const project = projects.find((p) => p.claims.includes(claim))?.name.toLowerCase();
+    const turn =
+      scored.find((t) => t.question.includes(claim)) ??
+      (project ? scored.find((t) => t.question.toLowerCase().includes(project)) : undefined);
     if (!turn) return { claim, status: "not_discussed", note: "This claim didn't come up — expect it in a real interview." };
     const score = turn.evaluation!.score;
     if (score >= 7) return { claim, status: "verified", note: "You backed this up with specific, credible detail." };

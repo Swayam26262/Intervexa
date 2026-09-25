@@ -73,7 +73,7 @@ export default async function BillingPage() {
         </p>
       )}
 
-      <section className="grid gap-4 lg:grid-cols-[1.1fr_1fr]" aria-label="Plans">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]" aria-label="Plans">
         <div className="flex flex-col rounded-[28px] border-2 border-primary bg-card p-6 sm:p-8">
           <div className="flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-title-lg">

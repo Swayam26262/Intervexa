@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export interface LinePoint {
@@ -11,6 +11,7 @@ export interface LinePoint {
 }
 
 const fmtDate = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+const fmtTime = (d: Date) => d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
 
 /**
  * Single-series line chart: 2px line, 10% area wash, ringed markers, hairline grid,
@@ -36,7 +37,15 @@ export function LineChart({
   const id = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
-  const W = 640;
+  // Draw at the real pixel width so text and strokes are never scaled.
+  const [W, setW] = useState(640);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => setW(Math.max(280, Math.round(entry.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const H = height;
   const pad = { top: 16, right: 40, bottom: 28, left: 32 };
   const innerW = W - pad.left - pad.right;
@@ -56,6 +65,8 @@ export function LineChart({
   const area = `${line} L${coords[coords.length - 1].x},${pad.top + innerH} L${coords[0].x},${pad.top + innerH} Z`;
   const last = coords[coords.length - 1];
   const xLabels = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])];
+  const sameDay = points.length > 1 && points[0].x.toDateString() === points[points.length - 1].x.toDateString();
+  const fmtX = sameDay ? fmtTime : fmtDate;
 
   function nearest(clientX: number) {
     const rect = wrapRef.current?.getBoundingClientRect();
@@ -88,7 +99,7 @@ export function LineChart({
         }}
         className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       >
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: "auto" }} aria-hidden>
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} className="block w-full" aria-hidden>
           <defs>
             <clipPath id={`${id}-clip`}>
               <rect x={pad.left} y={pad.top - 6} width={innerW + 6} height={innerH + 12} />
@@ -113,7 +124,7 @@ export function LineChart({
               textAnchor={i === 0 && points.length > 1 ? "start" : i === points.length - 1 && points.length > 1 ? "end" : "middle"}
               className="fill-on-surface-variant text-[11px]"
             >
-              {fmtDate(points[i].x)}
+              {fmtX(points[i].x)}
             </text>
           ))}
           <g clipPath={`url(#${id}-clip)`}>
@@ -149,7 +160,7 @@ export function LineChart({
               {ap.y}
               {valueSuffix}
             </span>
-            <span className="text-body-sm opacity-80">{fmtDate(ap.x)}</span>
+            <span className="text-body-sm opacity-80">{sameDay ? `${fmtDate(ap.x)}, ${fmtTime(ap.x)}` : fmtDate(ap.x)}</span>
           </div>
           {ap.meta?.map((m) => (
             <div key={m.label} className="mt-0.5 flex justify-between gap-4 text-body-sm">

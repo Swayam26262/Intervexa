@@ -46,8 +46,9 @@
   --warning-container: light-dark(#ffdea1, #5c4200);
   --on-warning-container: light-dark(#261900, #ffdea1);
 
-  /* Card surface: white on light, lifted tone on dark. */
-  --card: light-dark(#ffffff, #1c1b21);
+  /* Outlined-card surface: white on light, the base surface on dark (M3 outlined card), so
+     tinted surface-container tiles stay visible inside cards, and cards inside tinted sections. */
+  --card: light-dark(#ffffff, #131318);
 
   --radius: 1rem;
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);

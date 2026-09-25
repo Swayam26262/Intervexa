@@ -68,7 +68,7 @@ export async function fulfillOrder(orderId: string, paymentId: string): Promise<
   const payment = await Payment.findOneAndUpdate(
     { orderId, fulfilledAt: { $exists: false } },
     { $set: { status: "paid", paymentId, fulfilledAt: new Date() } },
-    { new: true },
+    { returnDocument: "after" },
   );
   if (!payment) return { applied: false };
   const product = getProduct(payment.productId);

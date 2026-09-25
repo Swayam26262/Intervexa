@@ -57,7 +57,7 @@ export async function rateLimit(rule: RateLimitRule, subject: string, now = new 
   const doc = await RateLimit.findOneAndUpdate(
     { key: `${rule.name}:${subject}`, windowStart },
     { $inc: { count: 1 }, $setOnInsert: { expiresAt: new Date(windowStart.getTime() + windowMs * 2) } },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   ).lean();
   const count = doc?.count ?? 1;
   return {

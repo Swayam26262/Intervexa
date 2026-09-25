@@ -31,3 +31,16 @@ test("mock loop from a job description", async ({ page }) => {
   await page.getByRole("link", { name: /Back to loop/ }).click();
   await expect(page.getByText("1 of")).toBeVisible();
 });
+
+// Regression: a route-group loading.tsx made client navigations after router.push stall
+// intermittently (the RSC response arrived but the new page never committed).
+test("creating loops back-to-back always lands on the new loop", async ({ page }) => {
+  await signUp(page);
+  await buy(page, "Get Pro");
+  for (let i = 0; i < 4; i++) {
+    await page.goto("/loops");
+    await page.getByLabel("Job description").fill(JD);
+    await page.getByRole("button", { name: "Build my loop" }).click();
+    await page.waitForURL(/\/loops\/[a-f0-9]{24}$/, { timeout: 10_000 });
+  }
+});

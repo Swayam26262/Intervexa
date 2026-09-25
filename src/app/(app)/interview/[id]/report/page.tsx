@@ -130,7 +130,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
                   {value === null ? (
                     <div className="text-body-sm text-on-surface-variant">Not assessed in this round</div>
                   ) : (
-                    <Progress value={value} indicatorClassName={value >= 75 ? "bg-success" : value >= 55 ? "bg-warning" : "bg-error"} />
+                    <Progress value={value} />
                   )}
                 </div>
               );
@@ -174,7 +174,9 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
       </div>
 
       {report.coding && <CodingReview coding={report.coding} />}
-      {report.claims && report.claims.length > 0 && <Claims claims={report.claims} />}
+      {report.claims &&
+        report.claims.length > 0 &&
+        (config.type === "project_deep_dive" || report.claims.some((c) => c.status !== "not_discussed")) && <Claims claims={report.claims} />}
 
       {full ? <Communication report={report} /> : <Upsell />}
 
@@ -317,7 +319,7 @@ function CodingReview({ coding }: { coding: NonNullable<InterviewReport["coding"
       <h2 id="code-heading" className="flex items-center gap-2 text-title-lg">
         <Code2 className="size-5 text-primary" /> Code review
       </h2>
-      <div className="mt-5 grid gap-8 md:grid-cols-[1.2fr_1fr]">
+      <div className="mt-5 grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <BarList max={10} valueFormat={(v) => `${v}/10`} items={rows.map(([label, value]) => ({ key: label, label, value }))} />
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">

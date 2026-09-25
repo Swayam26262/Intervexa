@@ -36,6 +36,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   trustHost: true,
+  logger: {
+    // A wrong password is an expected outcome, not a server error worth a stack trace.
+    error(error) {
+      if ((error as Error & { type?: string }).type === "CredentialsSignin") return;
+      console.error(error);
+    },
+  },
   callbacks: {
     async jwt({ token, user, account }) {
       if (user && account) {
@@ -56,7 +63,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               // Google has verified this address.
               $min: { emailVerified: new Date() },
             },
-            { upsert: true, new: true },
+            { upsert: true, returnDocument: "after" },
           );
           token.uid = dbUser._id.toString();
           token.name = dbUser.name;
